@@ -113,22 +113,25 @@
     </div>
 
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAXMUQX3bjQFnJGQEDI84aDI2GKdOnio64",
-            authDomain: "allpayment-44395.firebaseapp.com",
-            projectId: "allpayment-44395",
-            storageBucket: "allpayment-44395.appspot.com",
-            messagingSenderId: "216281313853",
-            appId: "1:216281313853:web:61598580a19c3c6d98b054",
-            measurementId: "G-BGDZLMSM2J"
-        };
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAXMUQX3bjQFnJGQEDI84aDI2GKdOnio64",
+  authDomain: "allpayment-44395.firebaseapp.com",
+  projectId: "allpayment-44395",
+  storageBucket: "allpayment-44395.appspot.com",
+  messagingSenderId: "216281313853",
+  appId: "1:216281313853:web:61598580a19c3c6d98b054",
+  measurementId: "G-BGDZLMSM2J"
+};
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
         const likeRef = database.ref('likes');
         const viewRef = database.ref('views');
         const commentsRef = database.ref('comments');
+        const userId = localStorage.getItem('userId') || Math.random().toString(36).substr(2, 9);
+
+        localStorage.setItem('userId', userId);
 
         // Update like count
         likeRef.on('value', (snapshot) => {
@@ -148,16 +151,22 @@
             document.getElementById('viewCount').innerText = `${formattedViewCount} Dilihat`;
         });
 
-        // Add like
-        document.getElementById('likeBtn').addEventListener('click', function() {
-            likeRef.transaction((currentLikes) => {
-                return (currentLikes || 0) + 1;
-            });
-        });
-
         // Increment view count
         viewRef.transaction((currentViews) => {
             return (currentViews || 0) + 1;
+        });
+
+        // Add like
+        document.getElementById('likeBtn').addEventListener('click', function() {
+            const likeStatus = localStorage.getItem('liked') || 'false';
+            if (likeStatus === 'false') {
+                likeRef.transaction((currentLikes) => {
+                    localStorage.setItem('liked', 'true');
+                    return (currentLikes || 0) + 1;
+                });
+            } else {
+                alert('Anda sudah memberikan like.');
+            }
         });
 
         // Load comments
@@ -174,8 +183,7 @@
                 const newCommentRef = commentsRef.push();
                 newCommentRef.set({
                     username,
-                    text: commentText,
-                    replies: []
+                    text: commentText
                 });
                 document.getElementById('username').value = '';
                 document.getElementById('comment').value = '';
@@ -229,7 +237,9 @@
             const link = document.createElement('a');
             link.href = document.getElementById('photo').src;
             link.download = 'photo.jpg';
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
         });
 
         // Share photo
@@ -243,9 +253,20 @@
                     console.log('Thanks for sharing!');
                 }).catch(console.error);
             } else {
-                prompt('Copy this link to share:', window.location.href);
+                const shareLink = document.createElement('input');
+                shareLink.value = window.location.href;
+                document.body.appendChild(shareLink);
+                shareLink.select();
+                document.execCommand('copy');
+                document.body.removeChild(shareLink);
+                alert('Link copied to clipboard.');
             }
         });
+
+        // Simulate page views
+        updateViewCount();
     </script>
+</body>
+</html>
 </body>
 </html>
