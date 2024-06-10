@@ -5,10 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Foto dengan Tombol Like, Download, Bagikan</title>
     <style>
-        /* Your CSS code */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        .photo-container {
+            margin-top: 50px;
+            text-align: center;
+        }
+        .photo-container img {
+            max-width: 100%;
+            height: auto;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .button {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            margin: 0 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .button i {
+            font-size: 30px;
+            color: white;
+        }
+        #likeBtn {
+            background-color: #3498db;
+        }
+        #downloadBtn {
+            background-color: #ecf0f1;
+        }
+        #shareBtn {
+            background-color: #2ecc71;
+        }
+        #likeCount, #viewCount {
+            margin-top: 10px;
+            font-size: 20px;
+        }
+        .comments-section {
+            margin-top: 30px;
+            width: 80%;
+        }
+        .comments-section input, .comments-section textarea {
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+        }
+        .comment {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+            position: relative;
+        }
+        .comment-reply {
+            margin-left: 20px;
+            padding-left: 10px;
+            border-left: 2px solid #ccc;
+        }
+        .comment .username {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .comment .text {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .comment .reply-btn {
+            cursor: pointer;
+            color: blue;
+            font-size: 12px;
+        }
+        .reply-input {
+            display: none;
+            margin-top: 10px;
+        }
     </style>
+    <!-- Include Font Awesome Kit Code -->
     <script src="https://kit.fontawesome.com/ed49aea2c0.js" crossorigin="anonymous"></script>
-    <!-- Firebase SDKs -->
+</head>
+<body>
+    <div class="photo-container">
+        <img id="photo" src="photo.jpg" alt="Photo">
+        <div class="buttons">
+            <div id="likeBtn" class="button"><i class="fas fa-thumbs-up"></i></div>
+            <div id="downloadBtn" class="button"><i class="fas fa-download"></i></div>
+            <div id="shareBtn" class="button"><i class="fas fa-share-alt"></i></div>
+        </div>
+        <div id="likeCount">0 Likes</div>
+        <div id="viewCount">0 Dilihat</div>
+    </div>
+
+    <div class="comments-section">
+        <h3>Comments</h3>
+        <input type="text" id="username" placeholder="Your name">
+        <textarea id="comment" rows="4" placeholder="Your comment"></textarea>
+        <button onclick="addComment()">Add Comment</button>
+        <div id="comments"></div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
     <script>
@@ -92,9 +194,8 @@
                 <div class="reply-input">
                     <input type="text" placeholder="Your name">
                     <textarea rows="2" placeholder="Your reply"></textarea>
-                    <button onclick="addReply(this, '${comment.id}')">Add Reply</button>
+                    <button onclick="addReply(this)">Add Reply</button>
                 </div>
-                <div class="replies"></div>
             `;
             commentSection.appendChild(newComment);
         }
@@ -106,41 +207,35 @@
         }
 
         // Add reply
-        function addReply(button, commentId) {
+        function addReply(button) {
             const replyInput = button.parentElement;
             const username = replyInput.querySelector('input').value;
             const replyText = replyInput.querySelector('textarea').value;
             if (username && replyText) {
-                const commentRef = commentsRef.child(commentId);
-                commentRef.child('replies').push({
+                const commentDiv = replyInput.parentElement;
+                const commentId = commentDiv.dataset.commentId;
+                const newReplyRef = commentsRef.child(commentId).child('replies').push();
+                newReplyRef.set({
                     username,
                     text: replyText
                 });
                 replyInput.querySelector('input').value = '';
                 replyInput.querySelector('textarea').value = '';
                 replyInput.style.display = 'none';
+                addReplyToDOM(commentDiv, { username, text: replyText });
             }
         }
-    </script>
-</head>
-<body>
-    <div class="photo-container">
-        <img id="photo" src="photo.jpg" alt="Photo">
-        <div class="buttons">
-            <div id="likeBtn" class="button"><i class="fas fa-thumbs-up"></i></div>
-            <div id="downloadBtn" class="button"><i class="fas fa-download"></i></div>
-            <div id="shareBtn" class="button"><i class="fas fa-share-alt"></i></div>
-        </div>
-        <div id="likeCount">0 Likes</div>
-        <div id="viewCount">0 Dilihat</div>
-    </div>
 
-    <div class="comments-section">
-        <h3>Comments</h3>
-        <input type="text" id="username" placeholder="Your name">
-        <textarea id="comment" rows="4" placeholder="Your comment"></textarea>
-        <button onclick="addComment()">Add Comment</button>
-        <div id="comments"></div>
-    </div>
+        // Add reply to DOM
+        function addReplyToDOM(commentDiv, reply) {
+            const replyDiv = document.createElement('div');
+            replyDiv.classList.add('comment-reply');
+            replyDiv.innerHTML = `
+                <span class="username">${reply.username}</span>
+                <span class="text">${reply.text}</span>
+            `;
+            commentDiv.appendChild(replyDiv);
+        }
+    </script>
 </body>
 </html>
