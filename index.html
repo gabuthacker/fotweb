@@ -88,8 +88,9 @@
             margin-top: 10px;
         }
     </style>
-    <!-- Include Font Awesome Kit Code -->
     <script src="https://kit.fontawesome.com/ed49aea2c0.js" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
 </head>
 <body>
     <div class="photo-container">
@@ -111,9 +112,8 @@
         <div id="comments"></div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
     <script>
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAXMUQX3bjQFnJGQEDI84aDI2GKdOnio64",
             authDomain: "allpayment-44395.firebaseapp.com",
@@ -123,7 +123,7 @@
             appId: "1:216281313853:web:61598580a19c3c6d98b054",
             measurementId: "G-BGDZLMSM2J"
         };
-        const app = firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
         const likeRef = database.ref('likes');
@@ -194,8 +194,9 @@
                 <div class="reply-input">
                     <input type="text" placeholder="Your name">
                     <textarea rows="2" placeholder="Your reply"></textarea>
-                    <button onclick="addReply(this)">Add Reply</button>
+                    <button onclick="addReply(this, '${comment.id}')">Add Reply</button>
                 </div>
+                <div class="replies"></div>
             `;
             commentSection.appendChild(newComment);
         }
@@ -207,35 +208,44 @@
         }
 
         // Add reply
-        function addReply(button) {
+        function addReply(button, commentId) {
             const replyInput = button.parentElement;
             const username = replyInput.querySelector('input').value;
             const replyText = replyInput.querySelector('textarea').value;
             if (username && replyText) {
-                const commentDiv = replyInput.parentElement;
-                const commentId = commentDiv.dataset.commentId;
-                const newReplyRef = commentsRef.child(commentId).child('replies').push();
-                newReplyRef.set({
+                const commentRef = commentsRef.child(commentId).child('replies').push();
+                commentRef.set({
                     username,
                     text: replyText
                 });
                 replyInput.querySelector('input').value = '';
                 replyInput.querySelector('textarea').value = '';
                 replyInput.style.display = 'none';
-                addReplyToDOM(commentDiv, { username, text: replyText });
             }
         }
 
-        // Add reply to DOM
-        function addReplyToDOM(commentDiv, reply) {
-            const replyDiv = document.createElement('div');
-            replyDiv.classList.add('comment-reply');
-            replyDiv.innerHTML = `
-                <span class="username">${reply.username}</span>
-                <span class="text">${reply.text}</span>
-            `;
-            commentDiv.appendChild(replyDiv);
-        }
+        // Download photo
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.href = document.getElementById('photo').src;
+            link.download = 'photo.jpg';
+            link.click();
+        });
+
+        // Share photo
+        document.getElementById('shareBtn').addEventListener('click', function() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Check out this photo!',
+                    text: 'I found this amazing photo, check it out!',
+                    url: window.location.href
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                }).catch(console.error);
+            } else {
+                prompt('Copy this link to share:', window.location.href);
+            }
+        });
     </script>
 </body>
 </html>
