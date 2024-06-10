@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foto dengan Tombol Like, Download, Bagikan</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        .photo-container {
+            margin-top: 50px;
+            text-align: center;
+        }
+        .photo-container img {
+            max-width: 100%;
+            height: auto;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .button {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            margin: 0 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .button i {
+            font-size: 30px;
+            color: white;
+        }
+        #likeBtn {
+            background-color: #3498db;
+        }
+        #downloadBtn {
+            background-color: #ecf0f1;
+        }
+        #shareBtn {
+            background-color: #2ecc71;
+        }
+        #likeCount, #viewCount {
+            margin-top: 10px;
+            font-size: 20px;
+        }
+        .comments-section {
+            margin-top: 30px;
+            width: 80%;
+        }
+        .comments-section input, .comments-section textarea {
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+        }
+        .comment {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+            position: relative;
+        }
+        .comment-reply {
+            margin-left: 20px;
+            padding-left: 10px;
+            border-left: 2px solid #ccc;
+        }
+        .comment .username {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .comment .text {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .comment .reply-btn {
+            cursor: pointer;
+            color: blue;
+            font-size: 12px;
+        }
+        .reply-input {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+    <!-- Include Font Awesome Kit Code -->
+    <script src="https://kit.fontawesome.com/ed49aea2c0.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="photo-container">
+        <img id="photo" src="photo.jpg" alt="Photo">
+        <div class="buttons">
+            <div id="likeBtn" class="button"><i class="fas fa-thumbs-up"></i></div>
+            <div id="downloadBtn" class="button"><i class="fas fa-download"></i></div>
+            <div id="shareBtn" class="button"><i class="fas fa-share-alt"></i></div>
+        </div>
+        <div id="likeCount">0 Likes</div>
+        <div id="viewCount">0 Dilihat</div>
+    </div>
+
+    <div class="comments-section">
+        <h3>Comments</h3>
+        <input type="text" id="username" placeholder="Your name">
+        <textarea id="comment" rows="4" placeholder="Your comment"></textarea>
+        <button onclick="addComment()">Add Comment</button>
+        <div id="comments"></div>
+    </div>
+
+    <script>
+        let likeCount = 0;
+        let viewCount = 0;
+
+        document.getElementById('likeBtn').addEventListener('click', function() {
+            likeCount++;
+            document.getElementById('likeCount').innerText = `${likeCount} Likes`;
+            // Add like button animation
+            this.classList.add('liked');
+            setTimeout(() => this.classList.remove('liked'), 300);
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.href = document.getElementById('photo').src;
+            link.download = 'photo.jpg';
+            link.click();
+        });
+
+        document.getElementById('shareBtn').addEventListener('click', function() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Check out this photo!',
+                    text: 'I found this amazing photo, check it out!',
+                    url: window.location.href
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                }).catch(console.error);
+            } else {
+                prompt('Copy this link to share:', window.location.href);
+            }
+        });
+
+        // Simulate page views
+        viewCount++;
+        updateViewCount();
+
+        function updateViewCount() {
+            let formattedViewCount;
+            if (viewCount >= 1000) {
+                formattedViewCount = (viewCount / 1000).toFixed(1) + 'k';
+            } else {
+                formattedViewCount = viewCount;
+            }
+            document.getElementById('viewCount').innerText = `${formattedViewCount} Dilihat`;
+        }
+
+        function addComment() {
+            const username = document.getElementById('username').value;
+            const comment = document.getElementById('comment').value;
+            if (username && comment) {
+                const commentSection = document.getElementById('comments');
+                const newComment = document.createElement('div');
+                newComment.classList.add('comment');
+                newComment.innerHTML = `
+                    <span class="username">${username}</span>
+                    <span class="text">${comment}</span>
+                    <span class="reply-btn" onclick="showReplyInput(this)">Reply</span>
+                    <div class="reply-input">
+                        <input type="text" placeholder="Your name">
+                        <textarea rows="2" placeholder="Your reply"></textarea>
+                        <button onclick="addReply(this)">Add Reply</button>
+                    </div>
+                    <div class="replies"></div>
+                `;
+                commentSection.appendChild(newComment);
+                document.getElementById('username').value = '';
+                document.getElementById('comment').value = '';
+            }
+        }
+
+        function showReplyInput(replyBtn) {
+            const replyInput = replyBtn.nextElementSibling;
+            replyInput.style.display = replyInput.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function addReply(button) {
+            const replyInput = button.parentElement;
+            const username = replyInput.querySelector('input').value;
+            const replyText = replyInput.querySelector('textarea').value;
+            if (username && replyText) {
+                const replySection = replyInput.nextElementSibling;
+                const newReply = document.createElement('div');
+                newReply.classList.add('comment-reply');
+                newReply.innerHTML = `<span class="username">${username}</span><span class="text">${replyText}</span>`;
+                replySection.appendChild(newReply);
+                replyInput.querySelector('input').value = '';
+                replyInput.querySelector('textarea').value = '';
+                replyInput.style.display = 'none';
+                notifyUser(button.closest('.comment').querySelector('.username').innerText);
+            }
+        }
+
+        function notifyUser(username) {
+            alert(`Hey ${username}, someone replied to your comment!`);
+        }
+    </script>
+</body>
+</html>
