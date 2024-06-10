@@ -8,34 +8,10 @@
         /* Your CSS code */
     </style>
     <script src="https://kit.fontawesome.com/ed49aea2c0.js" crossorigin="anonymous"></script>
-</head>
-<body>
-    <div class="photo-container">
-        <img id="photo" src="photo.jpg" alt="Photo">
-        <div class="buttons">
-            <div id="likeBtn" class="button"><i class="fas fa-thumbs-up"></i></div>
-            <div id="downloadBtn" class="button"><i class="fas fa-download"></i></div>
-            <div id="shareBtn" class="button"><i class="fas fa-share-alt"></i></div>
-        </div>
-        <div id="likeCount">0 Likes</div>
-        <div id="viewCount">0 Dilihat</div>
-    </div>
-
-    <div class="comments-section">
-        <h3>Comments</h3>
-        <input type="text" id="username" placeholder="Your name">
-        <textarea id="comment" rows="4" placeholder="Your comment"></textarea>
-        <button onclick="addComment()">Add Comment</button>
-        <div id="comments"></div>
-    </div>
-
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-        import { getDatabase, ref, onValue, runTransaction, push, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-        // Your web app's Firebase configuration
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAXMUQX3bjQFnJGQEDI84aDI2GKdOnio64",
             authDomain: "allpayment-44395.firebaseapp.com",
@@ -45,24 +21,21 @@
             appId: "1:216281313853:web:61598580a19c3c6d98b054",
             measurementId: "G-BGDZLMSM2J"
         };
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const database = getDatabase(app);
-
-        const likeRef = ref(database, 'likes');
-        const viewRef = ref(database, 'views');
-        const commentsRef = ref(database, 'comments');
+        const likeRef = database.ref('likes');
+        const viewRef = database.ref('views');
+        const commentsRef = database.ref('comments');
 
         // Update like count
-        onValue(likeRef, (snapshot) => {
+        likeRef.on('value', (snapshot) => {
             const likes = snapshot.val() || 0;
             document.getElementById('likeCount').innerText = `${likes} Likes`;
         });
 
         // Update view count
-        onValue(viewRef, (snapshot) => {
+        viewRef.on('value', (snapshot) => {
             const views = snapshot.val() || 0;
             let formattedViewCount;
             if (views >= 1000) {
@@ -75,18 +48,18 @@
 
         // Add like
         document.getElementById('likeBtn').addEventListener('click', function() {
-            runTransaction(likeRef, (currentLikes) => {
+            likeRef.transaction((currentLikes) => {
                 return (currentLikes || 0) + 1;
             });
         });
 
         // Increment view count
-        runTransaction(viewRef, (currentViews) => {
+        viewRef.transaction((currentViews) => {
             return (currentViews || 0) + 1;
         });
 
         // Load comments
-        onChildAdded(commentsRef, (snapshot) => {
+        commentsRef.on('child_added', (snapshot) => {
             const comment = snapshot.val();
             addCommentToDOM(comment);
         });
@@ -96,7 +69,7 @@
             const username = document.getElementById('username').value;
             const commentText = document.getElementById('comment').value;
             if (username && commentText) {
-                const newCommentRef = push(commentsRef);
+                const newCommentRef = commentsRef.push();
                 newCommentRef.set({
                     username,
                     text: commentText,
@@ -138,8 +111,8 @@
             const username = replyInput.querySelector('input').value;
             const replyText = replyInput.querySelector('textarea').value;
             if (username && replyText) {
-                const commentRef = child(commentsRef, commentId);
-                push(child(commentRef, 'replies')).set({
+                const commentRef = commentsRef.child(commentId);
+                commentRef.child('replies').push({
                     username,
                     text: replyText
                 });
@@ -149,5 +122,25 @@
             }
         }
     </script>
+</head>
+<body>
+    <div class="photo-container">
+        <img id="photo" src="photo.jpg" alt="Photo">
+        <div class="buttons">
+            <div id="likeBtn" class="button"><i class="fas fa-thumbs-up"></i></div>
+            <div id="downloadBtn" class="button"><i class="fas fa-download"></i></div>
+            <div id="shareBtn" class="button"><i class="fas fa-share-alt"></i></div>
+        </div>
+        <div id="likeCount">0 Likes</div>
+        <div id="viewCount">0 Dilihat</div>
+    </div>
+
+    <div class="comments-section">
+        <h3>Comments</h3>
+        <input type="text" id="username" placeholder="Your name">
+        <textarea id="comment" rows="4" placeholder="Your comment"></textarea>
+        <button onclick="addComment()">Add Comment</button>
+        <div id="comments"></div>
+    </div>
 </body>
 </html>
