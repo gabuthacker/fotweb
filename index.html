@@ -51,42 +51,6 @@
             margin-top: 10px;
             font-size: 20px;
         }
-        .comments-section {
-            margin-top: 30px;
-            width: 80%;
-        }
-        .comments-section input, .comments-section textarea {
-            width: 100%;
-            margin: 5px 0;
-            padding: 10px;
-        }
-        .comment {
-            border-bottom: 1px solid #ccc;
-            padding: 10px 0;
-            position: relative;
-        }
-        .comment-reply {
-            margin-left: 20px;
-            padding-left: 10px;
-            border-left: 2px solid #ccc;
-        }
-        .comment .username {
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .comment .text {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-        .comment .reply-btn {
-            cursor: pointer;
-            color: blue;
-            font-size: 12px;
-        }
-        .reply-input {
-            display: none;
-            margin-top: 10px;
-        }
     </style>
     <script src="https://kit.fontawesome.com/ed49aea2c0.js" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
@@ -102,14 +66,6 @@
         </div>
         <div id="likeCount">0 Likes</div>
         <div id="viewCount">0 Dilihat</div>
-    </div>
-
-    <div class="comments-section">
-        <h3>Comments</h3>
-        <input type="text" id="username" placeholder="Your name">
-        <textarea id="comment" rows="4" placeholder="Your comment"></textarea>
-        <button onclick="addComment()">Add Comment</button>
-        <div id="comments"></div>
     </div>
 
     <script>
@@ -128,20 +84,14 @@ const firebaseConfig = {
 
         const likeRef = database.ref('likes');
         const viewRef = database.ref('views');
-        const commentsRef = database.ref('comments');
-        const userId = localStorage.getItem('userId') || Math.random().toString(36).substr(2, 9);
 
-        localStorage.setItem('userId', userId);
-
-        // Update like count
-        likeRef.on('value', (snapshot) => {
-            const likes = snapshot.val() || 0;
+        // Function to update like count display
+        function updateLikeCount(likes) {
             document.getElementById('likeCount').innerText = `${likes} Likes`;
-        });
+        }
 
-        // Update view count
-        viewRef.on('value', (snapshot) => {
-            const views = snapshot.val() || 0;
+        // Function to update view count display
+        function updateViewCount(views) {
             let formattedViewCount;
             if (views >= 1000) {
                 formattedViewCount = (views / 1000).toFixed(1) + 'k';
@@ -149,6 +99,18 @@ const firebaseConfig = {
                 formattedViewCount = views;
             }
             document.getElementById('viewCount').innerText = `${formattedViewCount} Dilihat`;
+        }
+
+        // Listen for real-time updates to likes
+        likeRef.on('value', (snapshot) => {
+            const likes = snapshot.val() || 0;
+            updateLikeCount(likes);
+        });
+
+        // Listen for real-time updates to views
+        viewRef.on('value', (snapshot) => {
+            const views = snapshot.val() || 0;
+            updateViewCount(views);
         });
 
         // Increment view count
@@ -168,69 +130,6 @@ const firebaseConfig = {
                 alert('Anda sudah memberikan like.');
             }
         });
-
-        // Load comments
-        commentsRef.on('child_added', (snapshot) => {
-            const comment = snapshot.val();
-            addCommentToDOM(comment);
-        });
-
-        // Add comment
-        function addComment() {
-            const username = document.getElementById('username').value;
-            const commentText = document.getElementById('comment').value;
-            if (username && commentText) {
-                const newCommentRef = commentsRef.push();
-                newCommentRef.set({
-                    username,
-                    text: commentText
-                });
-                document.getElementById('username').value = '';
-                document.getElementById('comment').value = '';
-            }
-        }
-
-        // Add comment to DOM
-        function addCommentToDOM(comment) {
-            const commentSection = document.getElementById('comments');
-            const newComment = document.createElement('div');
-            newComment.classList.add('comment');
-            newComment.innerHTML = `
-                <span class="username">${comment.username}</span>
-                <span class="text">${comment.text}</span>
-                <span class="reply-btn" onclick="showReplyInput(this)">Reply</span>
-                <div class="reply-input">
-                    <input type="text" placeholder="Your name">
-                    <textarea rows="2" placeholder="Your reply"></textarea>
-                    <button onclick="addReply(this, '${comment.id}')">Add Reply</button>
-                </div>
-                <div class="replies"></div>
-            `;
-            commentSection.appendChild(newComment);
-        }
-
-        // Show reply input
-        function showReplyInput(replyBtn) {
-            const replyInput = replyBtn.nextElementSibling;
-            replyInput.style.display = replyInput.style.display === 'none' ? 'block' : 'none';
-        }
-
-        // Add reply
-        function addReply(button, commentId) {
-            const replyInput = button.parentElement;
-            const username = replyInput.querySelector('input').value;
-            const replyText = replyInput.querySelector('textarea').value;
-            if (username && replyText) {
-                const commentRef = commentsRef.child(commentId).child('replies').push();
-                commentRef.set({
-                    username,
-                    text: replyText
-                });
-                replyInput.querySelector('input').value = '';
-                replyInput.querySelector('textarea').value = '';
-                replyInput.style.display = 'none';
-            }
-        }
 
         // Download photo
         document.getElementById('downloadBtn').addEventListener('click', function() {
